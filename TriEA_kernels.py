@@ -183,7 +183,7 @@ def calc_energy_Triea (spin, energy, J_nn):
 def update_red (spin, seed, T, J_nn):
     m = T.shape[1]
     z, x, y = cuda.grid(3)
-    n = math.floor (z / m)
+    n = int(math.floor (z / m))
     l = z % m
     p, q = x % 3, y % 2
 
@@ -226,7 +226,7 @@ def update_red (spin, seed, T, J_nn):
 def update_blue (spin, seed, T, J_nn):
     m = T.shape[1]
     z, x, y = cuda.grid(3)
-    n = math.floor (z / m)
+    n = int(math.floor (z / m))
     l = z % m
     p, q = x % 3, y % 2
 
@@ -269,7 +269,7 @@ def update_blue (spin, seed, T, J_nn):
 def update_green (spin, seed, T, J_nn):
     m = T.shape[1]
     z, x, y = cuda.grid(3)
-    n = math.floor (z / m)
+    n = int(math.floor (z / m))
     l = z % m
     p, q = x % 3, y % 2
 
@@ -311,7 +311,7 @@ def update_green (spin, seed, T, J_nn):
 @cuda.jit
 def calc_energy (spin, energy, J_nn):
     z = cuda.grid (1)
-    n = math.floor (z / energy.shape[1])
+    n = int(math.floor (z / energy.shape[1]))
     l = z % energy.shape[1]
 
     def bvc (x):
@@ -343,7 +343,7 @@ def calc_energy (spin, energy, J_nn):
 def parallel_temper2 (T, seed, energy):
     z = cuda.grid(1)
     m = T.shape[1]//2
-    n = math.floor (z/m)
+    n = int(math.floor (z/m))
     l = z % m #Takes values between 0 and m//2
     if z < seed.shape[0]//2:
         rand_n = 0 if np.float32(seed[n, 0, 0]/2**31) < 0.5 else 1
