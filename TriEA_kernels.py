@@ -34,7 +34,7 @@ def update_red_ea(spin, seed, T, J_nn):
 
     def calc(x, y, z):
         probs = random_uniform(x, y, z)
-        if (probs < math.exp(2*spin[x, y, z]*sum_nn(x, y, z)/T[0])):
+        if (probs < math.exp(2*spin[x, y, z]*sum_nn(x, y, z)/T[z])):
             spin[x, y, z] *= np.int8(-1)
 
     x, y, z = cuda.grid(3)
@@ -76,7 +76,7 @@ def update_blue_ea(spin, seed, T, J_nn):
 
     def calc(x, y, z):
         probs = random_uniform(x, y, z)
-        if (probs < math.exp(2*spin[x, y, z]*sum_nn(x, y, z)/T[0])):
+        if (probs < math.exp(2*spin[x, y, z]*sum_nn(x, y, z)/T[z])):
             spin[x, y, z] *= np.int8(-1)
 
     x, y, z = cuda.grid(3)
@@ -119,7 +119,7 @@ def update_green_ea(spin, seed, T, J_nn):
 
     def calc(x, y, z):
         probs = random_uniform(x, y, z)
-        if (probs < math.exp(2*spin[x, y, z]*sum_nn(x, y, z)/T[0])):
+        if (probs < math.exp(2*spin[x, y, z]*sum_nn(x, y, z)/T[z])):
             spin[x, y, z] *= np.int8(-1)
 
     x, y, z = cuda.grid(3)
@@ -130,7 +130,7 @@ def update_green_ea(spin, seed, T, J_nn):
             calc(x, y, z)
 
 @cuda.jit
-def parallel_temper(T, seed, energy):
+def parallel_temper (T, seed, energy):
     z = cuda.grid(1)
 
     rand_n = 0 if np.float32(seed[0, 0, 0]/2**31) < 0.5 else 1
