@@ -130,7 +130,7 @@ def update_green_ea(spin, seed, T, J_nn):
             calc(x, y, z)
 
 @cuda.jit
-def parallel_temper(spin, T, seed, energy):
+def parallel_temper(T, seed, energy):
     z = cuda.grid(1)
 
     rand_n = 0 if np.float32(seed[0, 0, 0]/2**31) < 0.5 else 1
