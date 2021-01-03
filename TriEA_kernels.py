@@ -2,15 +2,18 @@ import math
 import numpy as np
 from numba import cuda
 
+#The variable perm used all over these kernels describe the permutation of lattices in the entire ensemble
+
 @cuda.jit
-def update_red (spin, seed, T, J_nn):
+def update_red (spin, seed, T, J_nn, perm):
     m = T.shape[1]
-    z, x, y = cuda.grid(3)
+    z, x, y = cuda.grid (3)
+    z = perm[z]
     n = int(math.floor (z / m))
     l = z % m
     p, q = x % 3, y % 2
 
-    def random_uniform():
+    def random_uniform ():
         seed[z, x, y] = np.int32((seed[z ,x, y]*1664525 + 1013904223) % 2**31)
         return seed[z, x, y] / (2**31)
 
@@ -46,9 +49,10 @@ def update_red (spin, seed, T, J_nn):
         calc()
 
 @cuda.jit
-def update_blue (spin, seed, T, J_nn):
+def update_blue (spin, seed, T, J_nn, perm):
     m = T.shape[1]
     z, x, y = cuda.grid(3)
+    z = perm [z]
     n = int(math.floor (z / m))
     l = z % m
     p, q = x % 3, y % 2
@@ -89,9 +93,10 @@ def update_blue (spin, seed, T, J_nn):
         calc()
 
 @cuda.jit
-def update_green (spin, seed, T, J_nn):
+def update_green (spin, seed, T, J_nn, perm):
     m = T.shape[1]
     z, x, y = cuda.grid(3)
+    z = perm [z]
     n = int(math.floor (z / m))
     l = z % m
     p, q = x % 3, y % 2
@@ -132,7 +137,7 @@ def update_green (spin, seed, T, J_nn):
         calc()
 
 @cuda.jit
-def calc_energy (spin, energy, J_nn):
+def calc_energy (spin, energy, J_nn): #No need to put perm map here because no T
     z = cuda.grid (1)
     n = int(math.floor (z / energy.shape[1]))
     l = z % energy.shape[1]
@@ -163,7 +168,7 @@ def calc_energy (spin, energy, J_nn):
         energy[n,l] = ener
 
 @cuda.jit
-def parallel_temper2 (T, seed, energy):
+def parallel_temper2 (T, seed, energy, perm):
     z = cuda.grid(1)
     m = T.shape[1]//2
     n = int(math.floor (z/m))
@@ -171,17 +176,18 @@ def parallel_temper2 (T, seed, energy):
     if z < seed.shape[0]//2:
         rand_n = 0 if np.float32(seed[n, 0, 0]/2**31) < 0.5 else 1
         ptr = 2*l + rand_n
+        z = 2*z + rand_n
         if ptr < energy.shape[0]-1:
-            val0 = 1./T[n,ptr]
-            val1 = 1./T[n,ptr+1]
+            val0 = perm[z]
+            val1 = perm[z+1]
             e0 = energy[n,ptr]
             e1 = energy[n,ptr+1]
             rand_unif = np.float32(seed[z, 1, 0] / 2**31)
-            arg = (e0 - e1)*(val0 - val1)
+            arg = (e0 - e1)*((1./T[n,ptr]) - (1./T[n,ptr+1]))
             if (arg < 0):
                 if rand_unif < math.exp(arg):
-                    T[n,ptr] = 1/val1
-                    T[n,ptr+1] = 1/val0
+                    perm[z] = val1
+                    perm[z+1] = val0
             else:
-                T[n,ptr] = 1/val1
-                T[n,ptr+1] = 1/val0
+                perm[z] = val1
+                perm[z+1] = val0
