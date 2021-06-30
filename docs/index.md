@@ -1,6 +1,6 @@
 # Spin_glass_NN
 
-##Testing math
+## Testing math
 $$ (x + y)^2 = x^2 + y^2 + 2xy $$
 
 ## Brief summary
